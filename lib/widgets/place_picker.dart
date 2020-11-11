@@ -25,7 +25,21 @@ class PlacePicker extends StatefulWidget {
   /// map does not pan to the user's current location.
   final LatLng displayLocation;
 
-  PlacePicker(this.apiKey, {this.displayLocation});
+  final String nearbyPlacesLabel;
+  final String findingPlaceLabel;
+  final String noResultFoundLabel;
+  final String tapToSelectThisLocationLabel;
+  final String searchHint;
+
+  PlacePicker(
+    this.apiKey, {
+    this.displayLocation,
+    this.nearbyPlacesLabel = 'Nearby Places',
+    this.findingPlaceLabel = 'Finding place...',
+    this.noResultFoundLabel = 'No result found',
+    this.tapToSelectThisLocationLabel,
+    this.searchHint,
+  });
 
   @override
   State<StatefulWidget> createState() => PlacePickerState();
@@ -90,7 +104,10 @@ class PlacePickerState extends State<PlacePicker> {
     return Scaffold(
       appBar: AppBar(
         key: this.appBarKey,
-        title: SearchInput(searchPlace),
+        title: SearchInput(
+          onSearchInput: searchPlace,
+          searchHint: widget.searchHint,
+        ),
         centerTitle: true,
       ),
       body: Column(
@@ -116,12 +133,16 @@ class PlacePickerState extends State<PlacePicker> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  SelectPlaceAction(getLocationName(),
-                      () => Navigator.of(context).pop(this.locationResult)),
+                  SelectPlaceAction(
+                    locationName: getLocationName(),
+                    onTap: () => Navigator.of(context).pop(this.locationResult),
+                    tapToSelectThisLocationLabel:
+                        widget.tapToSelectThisLocationLabel,
+                  ),
                   Divider(height: 8),
                   Padding(
-                    child:
-                        Text("Nearby Places", style: TextStyle(fontSize: 16)),
+                    child: Text(widget.nearbyPlacesLabel,
+                        style: TextStyle(fontSize: 16)),
                     padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   ),
                   Expanded(
@@ -197,7 +218,7 @@ class PlacePickerState extends State<PlacePicker> {
                     child: CircularProgressIndicator(strokeWidth: 3)),
                 SizedBox(width: 24),
                 Expanded(
-                    child: Text("Finding place...",
+                    child: Text(widget.findingPlaceLabel,
                         style: TextStyle(fontSize: 16)))
               ],
             ),
@@ -243,7 +264,7 @@ class PlacePickerState extends State<PlacePicker> {
 
       if (predictions.isEmpty) {
         AutoCompleteItem aci = AutoCompleteItem();
-        aci.text = "No result found";
+        aci.text = widget.noResultFoundLabel;
         aci.offset = 0;
         aci.length = 0;
 
