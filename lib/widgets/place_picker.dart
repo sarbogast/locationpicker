@@ -136,34 +136,30 @@ class PlacePickerState extends State<PlacePicker> {
               markers: markers,
             ),
           ),
-          if (!this.hasSearchTerm)
+          SelectPlaceAction(
+            locationName: getLocationName(),
+            onTap: () => Navigator.of(context).pop(this.locationResult),
+            tapToSelectThisLocationLabel: widget.tapToSelectThisLocationLabel,
+          ),
+          if (widget.showNearbyPlaces && !this.hasSearchTerm)
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  SelectPlaceAction(
-                    locationName: getLocationName(),
-                    onTap: () => Navigator.of(context).pop(this.locationResult),
-                    tapToSelectThisLocationLabel:
-                        widget.tapToSelectThisLocationLabel,
-                  ),
                   Divider(height: 8),
-                  if (widget.showNearbyPlaces)
-                    Padding(
-                      child: Text(widget.nearbyPlacesLabel,
-                          style: TextStyle(fontSize: 16)),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  Padding(
+                    child: Text(widget.nearbyPlacesLabel,
+                        style: TextStyle(fontSize: 16)),
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  ),
+                  Expanded(
+                    child: ListView(
+                      children: nearbyPlaces
+                          .map((it) => NearbyPlaceItem(
+                              it, () => moveToLocation(it.latLng)))
+                          .toList(),
                     ),
-                  if (widget.showNearbyPlaces)
-                    Expanded(
-                      child: ListView(
-                        children: nearbyPlaces
-                            .map((it) => NearbyPlaceItem(
-                                it, () => moveToLocation(it.latLng)))
-                            .toList(),
-                      ),
-                    ),
+                  ),
                 ],
               ),
             ),
@@ -376,8 +372,11 @@ class PlacePickerState extends State<PlacePicker> {
     // markers.clear();
     setState(() {
       markers.clear();
-      markers.add(
-          Marker(markerId: MarkerId("selected-location"), position: latLng));
+      markers.add(Marker(
+        markerId: MarkerId("selected-location"),
+        position: latLng,
+        icon: widget.markerIcon,
+      ));
     });
   }
 
