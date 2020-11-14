@@ -117,53 +117,60 @@ class PlacePickerState extends State<PlacePicker> {
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: <Widget>[
-          Expanded(
-            child: GoogleMap(
-              mapType: widget.mapType,
-              initialCameraPosition: CameraPosition(
-                target: widget.displayLocation ?? LatLng(5.6037, 0.1870),
-                zoom: 15,
-              ),
-              myLocationButtonEnabled: true,
-              myLocationEnabled: true,
-              onMapCreated: onMapCreated,
-              onTap: (latLng) {
-                clearOverlay();
-                moveToLocation(latLng);
-              },
-              markers: markers,
-            ),
-          ),
-          SelectPlaceAction(
-            locationName: getLocationName(),
-            onTap: () => Navigator.of(context).pop(this.locationResult),
-            tapToSelectThisLocationLabel: widget.tapToSelectThisLocationLabel,
-          ),
-          if (widget.showNearbyPlaces && !this.hasSearchTerm)
+      body: SafeArea(
+        child: Column(
+          children: <Widget>[
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Divider(height: 8),
-                  Padding(
-                    child: Text(widget.nearbyPlacesLabel,
-                        style: TextStyle(fontSize: 16)),
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                  ),
-                  Expanded(
-                    child: ListView(
-                      children: nearbyPlaces
-                          .map((it) => NearbyPlaceItem(
-                              it, () => moveToLocation(it.latLng)))
-                          .toList(),
-                    ),
-                  ),
-                ],
+              child: GoogleMap(
+                mapType: widget.mapType,
+                initialCameraPosition: CameraPosition(
+                  target: widget.displayLocation ?? LatLng(5.6037, 0.1870),
+                  zoom: 25,
+                ),
+                myLocationButtonEnabled: true,
+                myLocationEnabled: true,
+                onMapCreated: onMapCreated,
+                onTap: (latLng) {
+                  clearOverlay();
+                  moveToLocation(latLng);
+                },
+                markers: markers,
               ),
             ),
-        ],
+            SelectPlaceAction(
+              locationName: getLocationName(),
+              onTap: () => Navigator.of(context).pop(this.locationResult),
+              tapToSelectThisLocationLabel: widget.tapToSelectThisLocationLabel,
+            ),
+            if (widget.showNearbyPlaces && !this.hasSearchTerm)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Divider(height: 8),
+                    Padding(
+                      child: Text(widget.nearbyPlacesLabel,
+                          style: TextStyle(fontSize: 16)),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    ),
+                    Expanded(
+                      child: ListView(
+                        children: nearbyPlaces
+                            .map(
+                              (it) => NearbyPlaceItem(
+                                it,
+                                () => moveToLocation(it.latLng),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -533,10 +540,16 @@ class PlacePickerState extends State<PlacePicker> {
   /// match the location.
   void moveToLocation(LatLng latLng) {
     this.mapController.future.then((controller) {
-      controller.animateCamera(
-        CameraUpdate.newCameraPosition(
-            CameraPosition(target: latLng, zoom: 15.0)),
-      );
+      controller.getZoomLevel().then((currentZoomLevel) {
+        controller.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: latLng,
+              zoom: currentZoomLevel,
+            ),
+          ),
+        );
+      });
     });
 
     setMarker(latLng);
