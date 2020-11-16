@@ -8,9 +8,6 @@ class LocationResult {
   /// places list, we use the <b>name</b> provided on the list item.
   String name; // or road
 
-  /// The human readable locality of the location.
-  String locality;
-
   /// Latitude/Longitude of the selected location.
   LatLng latLng;
 
@@ -29,7 +26,9 @@ class LocationResult {
 
   AddressComponent subLocalityLevel2;
 
-  String postalCode;
+  AddressComponent postalCode;
 
   String placeId;
+
+  String get locality => city?.name;
 }
