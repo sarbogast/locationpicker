@@ -582,6 +582,8 @@ class PlacePickerState extends State<PlacePicker> {
     bool reverseGeocode = true,
     bool updateNearbyPlaces = true,
   }) {
+    _currentLatLng = latLng;
+
     if (_currentZoom != null) {
       this.mapController.future.then((controller) {
         if (animated) {
@@ -645,7 +647,6 @@ class PlacePickerState extends State<PlacePicker> {
 
     Location().getLocation().then((locationData) {
       LatLng target = LatLng(locationData.latitude, locationData.longitude);
-      _currentLatLng = target;
       moveToLocation(target);
     }).catchError((error) {
       // TODO: Handle the exception here
