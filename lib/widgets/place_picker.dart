@@ -134,6 +134,10 @@ class PlacePickerState extends State<PlacePicker> {
                   clearOverlay();
                   moveToLocation(latLng);
                 },
+                onCameraMove: (cameraPosition) {
+                  clearOverlay();
+                  moveToLocation(cameraPosition.target);
+                },
                 markers: markers,
               ),
             ),
