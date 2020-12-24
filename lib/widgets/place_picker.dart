@@ -75,7 +75,8 @@ class PlacePickerState extends State<PlacePicker> {
 
   String previousSearchTerm = '';
 
-  LatLng _centerLatLng;
+  double _currentZoom;
+  LatLng _currentLatLng;
 
   // constructor
   PlacePickerState();
@@ -83,6 +84,8 @@ class PlacePickerState extends State<PlacePicker> {
   void onMapCreated(GoogleMapController controller) {
     this.mapController.complete(controller);
     moveToCurrentUserLocation();
+
+    controller.getZoomLevel().then((value) => _currentZoom = value);
   }
 
   @override
@@ -95,7 +98,7 @@ class PlacePickerState extends State<PlacePicker> {
   @override
   void initState() {
     super.initState();
-    _centerLatLng = widget.displayLocation;
+    _currentLatLng = widget.displayLocation;
     markers.add(Marker(
       icon: widget.markerIcon,
       position: widget.displayLocation ?? LatLng(5.6037, 0.1870),
@@ -138,13 +141,17 @@ class PlacePickerState extends State<PlacePicker> {
                   moveToLocation(latLng);
                 },
                 onCameraMove: (cameraPosition) {
-                  _centerLatLng = cameraPosition.target;
+                  _currentZoom = cameraPosition.zoom;
+                  _currentLatLng = cameraPosition.target;
+                  moveToLocation(
+                    cameraPosition.target,
+                    animated: false,
+                    reverseGeocode: false,
+                    updateNearbyPlaces: false,
+                  );
                 },
                 onCameraIdle: () {
-                  if(_centerLatLng != null) {
-                    clearOverlay();
-                    moveToLocation(_centerLatLng);
-                  }
+                  moveToLocation(_currentLatLng, animated: false);
                 },
                 markers: markers,
               ),
@@ -568,25 +575,65 @@ class PlacePickerState extends State<PlacePicker> {
 
   /// Moves the camera to the provided location and updates other UI features to
   /// match the location.
-  void moveToLocation(LatLng latLng) {
-    this.mapController.future.then((controller) {
-      controller.getZoomLevel().then((currentZoomLevel) {
-        controller.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(
-              target: latLng,
-              zoom: currentZoomLevel,
+  void moveToLocation(
+    LatLng latLng, {
+    bool animated = true,
+    bool reverseGeocode = true,
+    bool updateNearbyPlaces = true,
+  }) {
+    if (_currentZoom != null) {
+      this.mapController.future.then((controller) {
+        if (animated) {
+          controller.animateCamera(
+            CameraUpdate.newCameraPosition(
+              CameraPosition(
+                target: latLng,
+                zoom: _currentZoom,
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          controller.moveCamera(
+            CameraUpdate.newCameraPosition(
+              CameraPosition(
+                target: latLng,
+                zoom: _currentZoom,
+              ),
+            ),
+          );
+        }
       });
-    });
+    } else {
+      this.mapController.future.then((controller) {
+        controller.getZoomLevel().then((currentZoomLevel) {
+          if (animated) {
+            controller.animateCamera(
+              CameraUpdate.newCameraPosition(
+                CameraPosition(
+                  target: latLng,
+                  zoom: currentZoomLevel,
+                ),
+              ),
+            );
+          } else {
+            controller.moveCamera(
+              CameraUpdate.newCameraPosition(
+                CameraPosition(
+                  target: latLng,
+                  zoom: currentZoomLevel,
+                ),
+              ),
+            );
+          }
+        });
+      });
+    }
 
     setMarker(latLng);
 
-    reverseGeocodeLatLng(latLng);
+    if (reverseGeocode) reverseGeocodeLatLng(latLng);
 
-    getNearbyPlaces(latLng);
+    if (updateNearbyPlaces) getNearbyPlaces(latLng);
   }
 
   void moveToCurrentUserLocation() {
